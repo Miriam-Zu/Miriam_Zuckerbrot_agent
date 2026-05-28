@@ -1,0 +1,21 @@
+# Core LLM & Agent framework
+langgraph==0.2.60
+langchain==0.3.18
+langchain-openai==0.2.14
+langchain-core==0.3.37
+openai==1.59.9
+
+# Dataset
+datasets==3.2.0
+pandas==2.2.3
+
+# MCP Server
+fastmcp==0.4.1
+
+# Environment & CLI
+python-dotenv==1.0.1
+rich==13.9.4
+
+# Utilities
+pydantic==2.10.4
+typing-extensions==4.12.2
