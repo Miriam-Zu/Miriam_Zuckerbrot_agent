@@ -56,7 +56,7 @@ def build_llm() -> ChatOpenAI:
     """
     Instantiate the main agent LLM via the Nebius Token Factory (OpenAI-compatible).
 
-    Model: meta-llama/Meta-Llama-3.1-70B-Instruct-fast
+    Model: meta-llama/Llama-3.3-70B-Instruct
     Chosen because it offers strong instruction-following and tool-calling
     capability within Nebius's catalogue, at a reasonable speed/cost trade-off.
     """

@@ -29,7 +29,7 @@ A LangGraph-based ReAct agent that answers questions about the [Bitext Customer 
 
 ```bash
 git clone https://github.com/Miriam-Zu/Miriam_Zuckerbrot_agent.git
-cd your-repo-name
+cd Miriam_Zuckerbrot_agent
 ```
 
 ### 2. Create and activate a virtual environment
@@ -196,11 +196,11 @@ The `--session` flag binds the graph to a named thread in a `MemorySaver` checkp
 
 | Role | Model |
 |---|---|
-| Router | `meta-llama/Meta-Llama-3.1-70B-Instruct-fast` |
-| ReAct agent | `meta-llama/Meta-Llama-3.1-70B-Instruct-fast` |
+| Router | `meta-llama/Llama-3.3-70B-Instruct` |
+| ReAct agent | `meta-llama/Llama-3.3-70B-Instruct` |
 
 **Why this model?**
-`Meta-Llama-3.1-70B-Instruct-fast` is available on Nebius Token Factory and offers strong instruction-following, reliable tool/function calling, and good reasoning quality. The 70B size hits a practical sweet spot: capable enough for multi-step tool chaining and open-ended summarisation, while fast enough for an interactive CLI. A smaller model (e.g. 8B) was considered for the router, but the classification task benefits from the same model's consistency, and the router call is cheap (single short prompt).
+`meta-llama/Llama-3.3-70B-Instruct` is available on Nebius Token Factory and offers strong instruction-following, reliable tool/function calling, and good reasoning quality. The 70B size hits a practical sweet spot: capable enough for multi-step tool chaining and open-ended summarisation, while fast enough for an interactive CLI. A smaller model (e.g. 8B) was considered for the router, but the classification task benefits from the same model's consistency, and the router call is cheap (single short prompt).
 
 ---
 
@@ -230,7 +230,6 @@ bitext-agent/
 ├── .gitignore
 │
 ├── agent/
-│   ├── __init__.py
 │   ├── graph.py          # LangGraph StateGraph definition
 │   ├── router.py         # Query classification node
 │   ├── state.py          # AgentState TypedDict
@@ -238,7 +237,6 @@ bitext-agent/
 │   └── prompts.py        # All prompt strings
 │
 └── data/
-    ├── __init__.py
     └── loader.py         # Dataset download and caching
 ```
 
@@ -286,7 +284,7 @@ You: Remind me what categories we discussed
 🤖  We looked at COMPLAINT and REFUND ...
 ```
 
-### 2b — User Profile
+### 2b — User Profile -- Under construction.
 
 A lightweight user profile is maintained **separately** from conversation history. It captures distilled facts — not a replay of messages:
 
