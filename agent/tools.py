@@ -23,6 +23,20 @@ from data.loader import get_dataframe, get_categories, get_intents
 
 logger = logging.getLogger(__name__)
 
+# Helpers
+_NULL_STRINGS = {"null", "none", "n/a", "", "undefined"}
+ 
+ 
+def _clean(value: str | None) -> str | None:
+    """
+    Normalise a string argument that the LLM may have filled with a null-like
+    placeholder (e.g. the string "null" or "none") back to Python None.
+    """
+    if value is None:
+        return None
+    if str(value).strip().lower() in _NULL_STRINGS:
+        return None
+    return value.strip()
 
 # Input schemas (Pydantic models)
 
@@ -43,11 +57,13 @@ class FilterRowsInput(BaseModel):
 
     category: str | None = Field(
         default=None,
-        description="Upper-case category name to filter by (e.g. 'ACCOUNT').",
+        description=("Upper-case category name to filter by (e.g. 'ACCOUNT')."
+                     "Omit or pass null if not filtering by category."),
     )
     intent: str | None = Field(
         default=None,
-        description="Snake-case intent label to filter by (e.g. 'get_refund').",
+        description=("Snake-case intent label to filter by (e.g. 'get_refund')."
+                     "Omit or pass null if not filtering by intent."),
     )
     n_samples: int = Field(
         default=5,
@@ -62,11 +78,13 @@ class CountRowsInput(BaseModel):
 
     category: str | None = Field(
         default=None,
-        description="Upper-case category name to count (e.g. 'REFUND').",
+        description=("Upper-case category name to count (e.g. 'REFUND')."
+                     "Omit or pass null if not filtering by category."),
     )
     intent: str | None = Field(
         default=None,
-        description="Snake-case intent label to count (e.g. 'get_refund').",
+        description=("Snake-case intent label to count (e.g. 'get_refund')."
+                     "Omit or pass null if not filtering by intent."),
     )
 
 
@@ -86,11 +104,13 @@ class SummariseSamplesInput(BaseModel):
 
     category: str | None = Field(
         default=None,
-        description="Upper-case category to sample from.",
+        description=("Upper-case category to sample from."
+                     "Omit or pass null if not filtering by category."),
     )
     intent: str | None = Field(
         default=None,
-        description="Snake-case intent to sample from.",
+        description=("Snake-case intent to sample from."
+                     "Omit or pass null if not filtering by intent."),
     )
     n_samples: int = Field(
         default=30,
@@ -152,8 +172,9 @@ def list_intents(category: str | None = None) -> dict[str, Any]:
     ----------
     category:
         Optional upper-case category name (e.g. 'REFUND').
-        Omit to list all intents in the whole dataset.
+        Omit or pass null to list all intents in the whole dataset.
     """
+    category = _clean(category)
     intents = get_intents(category)
     result: dict[str, Any] = {"intents": intents, "count": len(intents)}
     if category:
@@ -171,18 +192,22 @@ def filter_rows(
     Return a sample of rows from the dataset, filtered by category and/or intent.
 
     Use this tool when the user asks to 'show me examples' or 'give me samples'
-    from a particular category or intent.  Also useful as the first step when
-    you need to see raw text before summarising.
+    from a particular category or intent.  
+
+    IMPORTANT: Only pass a value for category or intent if you actually want to filter by it.
+    Do NOT pass the string "null", simply omit the argument.
 
     Parameters
     ----------
     category:
-        Upper-case category filter (e.g. 'SHIPPING').
+        Upper-case category filter (e.g. 'SHIPPING'). Omit if not filtering.
     intent:
-        Snake-case intent filter (e.g. 'track_order').
+        Snake-case intent filter (e.g. 'track_order'). Omit if not filtering.
     n_samples:
         How many rows to return (default 5, max 20).
     """
+    category = _clean(category)
+    intent = _clean(intent)
     df = get_dataframe()
 
     if category:
@@ -211,19 +236,25 @@ def count_rows(
     Use this tool when the user asks 'how many …' questions, such as
     'how many refund requests', 'how many rows in SHIPPING', etc.
 
+    IMPORTANT: Only pass a value for category or intent if you actually want to filter by it.
+    Do NOT pass the string "null", simply omit the argument.
+
     Parameters
     ----------
     category:
-        Upper-case category to count (e.g. 'REFUND').
+        Upper-case category to count (e.g. 'REFUND'). Omit if not filtering.
     intent:
-        Snake-case intent to count (e.g. 'get_refund').
+        Snake-case intent to count (e.g. 'get_refund'). Omit if not filtering.
     """
+
+    category = _clean(category)
+    intent = _clean(intent)
     df = get_dataframe()
 
     if category:
-        df = df[df["category"] == category.upper().strip()]
+        df = df[df["category"] == category.upper()]
     if intent:
-        df = df[df["intent"] == intent.lower().strip()]
+        df = df[df["intent"] == intent.lower()]
 
     result: dict[str, Any] = {"count": len(df)}
     if category:
@@ -247,11 +278,12 @@ def get_distribution(category: str) -> dict[str, Any]:
     category:
         Upper-case category name (e.g. 'ACCOUNT').
     """
+    category = _clean(category)
     df = get_dataframe()
     df = df[df["category"] == category.upper().strip()]
 
     if df.empty:
-        return {"error": f"No rows found for category '{category}'."}
+        return {"error": f"No rows found for category '{category}'. Use list_categories to see valid category names."}
 
     counts = df["intent"].value_counts()
     total = counts.sum()
@@ -285,6 +317,10 @@ def summarise_samples(
     - 'How do agents respond to cancellation requests?'
     - 'What themes appear in REFUND complaints?'
 
+    IMPORTANT: Only pass a value for category or intent if you actually want to filter by it.
+    Do NOT pass the string "null", simply omit the argument.
+    If unsure of the exact category name, call list_categories first.
+
     This tool does NOT summarise itself 
     rather it returns the raw instruction/response pairs 
     so the LLM can synthesise a meaningful summary.
@@ -292,23 +328,26 @@ def summarise_samples(
     Parameters
     ----------
     category:
-        Upper-case category to sample from.
+        Upper-case category to sample from. Omit if not filtering.
     intent:
-        Snake-case intent to sample from.
+        Snake-case intent to sample from. Omit if not filtering.
     n_samples:
         Number of rows to sample (default 30).
     focus:
         Hint about what to focus on ('agent responses', 'customer messages', 'both').
     """
+    category = _clean(category)
+    intent = _clean(intent)
     df = get_dataframe()
 
     if category:
-        df = df[df["category"] == category.upper().strip()]
+        df = df[df["category"] == category.upper()]
     if intent:
-        df = df[df["intent"] == intent.lower().strip()]
+        df = df[df["intent"] == intent.lower()]
 
     if df.empty:
-        return {"error": "No rows found matching the given filters."}
+        available = get_categories()
+        return {"error": f"No rows found matching the given filters. Available categories: {available}."}
 
     sample = df[["instruction", "response", "category", "intent"]].sample(
         min(n_samples, len(df)), random_state=42

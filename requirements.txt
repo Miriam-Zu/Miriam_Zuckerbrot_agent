@@ -1,5 +1,6 @@
 # Core LLM & Agent framework
-langgraph==0.2.60
+langgraph==0.5.4
+langgraph-checkpoint-sqlite==2.0.11
 langchain==0.3.18
 langchain-openai==0.2.14
 langchain-core==0.3.37

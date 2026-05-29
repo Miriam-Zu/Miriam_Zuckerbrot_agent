@@ -6,7 +6,7 @@ Defines the AgentState that is threaded through every node in the LangGraph grap
 
 from __future__ import annotations
 
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from langgraph.graph.message import add_messages
 from typing_extensions import TypedDict
@@ -29,8 +29,12 @@ class AgentState(TypedDict):
     iteration_count:
         Number of agent→tool round-trips completed in the current turn.
         Checked after every tool execution to enforce the max-iterations guard.
+    user_profile:
+        Distilled facts about the user, loaded from disk at the start of the session and updated after every agent response.  
+        Injected into the system prompt to enable personalized interactions.
     """
 
     messages: Annotated[list, add_messages]
     query_type: QueryType | None
     iteration_count: int
+    user_profile: dict[str, Any] 
